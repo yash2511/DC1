@@ -1,29 +1,90 @@
 import axios from "axios";
 import dotenv from 'dotenv';
 import fs from 'fs';
+import FormData from 'form-data';
 import { initDB, upsertProduct, addPriceRecord, cleanupOldRecords } from './supabase-database.js';
+import { generatePriceChart } from './price-chart-generator.js';
+import { getPriceStatistics } from './supabase-chart-integration.js';
 
 dotenv.config({ path: './.env' });
 
 const { FLIPKART_AFFILIATE_ID, FLIPKART_AFFILIATE_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } = process.env;
 
-// Send Telegram alert
+// Send Telegram alert with chart
 async function sendAlert(product) {
   const info = product.productBaseInfoV1;
-  const message = `🚨 <b>ALL-TIME LOW ALERT!</b> 🚨\n\n` +
-    `📱 <b>${info.title}</b>\n\n` +
-    `💰 Current Price: ₹${info.flipkartSpecialPrice.amount}\n` +
-    `🔥 Discount: ${info.discountPercentage}% OFF\n` +
-    `📦 Stock: ${info.inStock ? '✅ Available' : '❌ Out of Stock'}\n\n` +
-    `🛒 <a href="${info.productUrl}">BUY NOW - Limited Time!</a>`;
-
+  const productId = info.productId;
+  
   try {
+    // Get price statistics from Supabase only
+    const stats = await getPriceStatistics(productId);
+    
+    if (stats && stats.priceHistory.length >= 2) {
+      // Generate chart from Supabase data
+      const chartFile = generatePriceChart(stats.priceHistory, info.title, productId);
+      
+      if (chartFile && fs.existsSync(chartFile)) {
+        // Send chart with alert message
+        const caption = `🚨 <b>ALL-TIME LOW ALERT!</b> 🚨\n\n` +
+          `📱 <b>${info.title}</b>\n\n` +
+          `💰 Current Price: ₹${info.flipkartSpecialPrice.amount.toLocaleString()}\n` +
+          `🔥 Discount: ${info.discountPercentage}% OFF\n` +
+          `📦 Stock: ${info.inStock ? '✅ Available' : '❌ Out of Stock'}\n` +
+          `📉 Lowest Ever: ₹${stats.minPrice.toLocaleString()}\n` +
+          `📈 Highest: ₹${stats.maxPrice.toLocaleString()}\n` +
+          `💾 Price Reduction: ${stats.reductionPercent}%\n\n` +
+          `🛒 <a href="${info.productUrl}">BUY NOW - Limited Time!</a>`;
+        
+        const formData = new FormData();
+        formData.append('chat_id', TELEGRAM_CHAT_ID);
+        formData.append('document', fs.createReadStream(chartFile));
+        formData.append('caption', 'Price History Chart');
+        formData.append('parse_mode', 'HTML');
+        
+        // Send text message first
+        const textMessage = `🚨 <b>ALL-TIME LOW ALERT!</b> 🚨\n\n` +
+          `📱 <b>${info.title}</b>\n\n` +
+          `💰 Current Price: ₹${info.flipkartSpecialPrice.amount.toLocaleString()}\n` +
+          `🔥 Discount: ${info.discountPercentage}% OFF\n` +
+          `📦 Stock: ${info.inStock ? '✅ Available' : '❌ Out of Stock'}\n` +
+          `📉 Lowest Ever: ₹${stats.minPrice.toLocaleString()}\n` +
+          `📈 Highest: ₹${stats.maxPrice.toLocaleString()}\n` +
+          `💾 Price Reduction: ${stats.reductionPercent}%\n\n` +
+          `🛒 <a href="${info.productUrl}">BUY NOW - Limited Time!</a>`;
+        
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          chat_id: TELEGRAM_CHAT_ID,
+          text: textMessage,
+          parse_mode: 'HTML'
+        });
+        
+        // Send chart as document
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, formData, {
+          headers: formData.getHeaders()
+        });
+        
+        // Clean up chart file
+        fs.unlinkSync(chartFile);
+        console.log(`Alert with chart sent for: ${info.title}`);
+        return;
+      }
+    }
+    
+    // Fallback to text-only alert if chart generation fails
+    const message = `🚨 <b>ALL-TIME LOW ALERT!</b> 🚨\n\n` +
+      `📱 <b>${info.title}</b>\n\n` +
+      `💰 Current Price: ₹${info.flipkartSpecialPrice.amount.toLocaleString()}\n` +
+      `🔥 Discount: ${info.discountPercentage}% OFF\n` +
+      `📦 Stock: ${info.inStock ? '✅ Available' : '❌ Out of Stock'}\n\n` +
+      `🛒 <a href="${info.productUrl}">BUY NOW - Limited Time!</a>`;
+
     await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       chat_id: TELEGRAM_CHAT_ID,
       text: message,
       parse_mode: 'HTML'
     });
-    console.log(`Alert sent for: ${info.title}`);
+    console.log(`Text alert sent for: ${info.title}`);
+    
   } catch (err) {
     console.error('Telegram error:', err.response?.data || err.message);
   }

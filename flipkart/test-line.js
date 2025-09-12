@@ -1,0 +1,61 @@
+import axios from 'axios';
+import dotenv from 'dotenv';
+import { sendLineChartAlert } from './line-chart.js';
+
+dotenv.config({ path: './.env' });
+
+const { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } = process.env;
+
+const telegramBot = {
+  async sendMessage(message) {
+    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+      parse_mode: 'HTML'
+    });
+  }
+};
+
+async function testLineChart() {
+  const sampleProduct = {
+    productBaseInfoV1: {
+      productId: 'TEST123',
+      title: 'iPhone 15 Pro 128GB',
+      flipkartSpecialPrice: { amount: 89999 },
+      discountPercentage: 20,
+      inStock: true,
+      productUrl: 'https://flipkart.com/test'
+    }
+  };
+
+  const sampleHistory = [
+    {price: 95000, recordedAt: '2024-01-01'},
+    {price: 92000, recordedAt: '2024-02-01'},
+    {price: 94000, recordedAt: '2024-03-01'},
+    {price: 91000, recordedAt: '2024-04-01'},
+    {price: 93000, recordedAt: '2024-05-01'},
+    {price: 90000, recordedAt: '2024-06-01'},
+    {price: 92500, recordedAt: '2024-07-01'},
+    {price: 89000, recordedAt: '2024-08-01'},
+    {price: 91500, recordedAt: '2024-09-01'},
+    {price: 88000, recordedAt: '2024-10-01'},
+    {price: 90500, recordedAt: '2024-11-01'},
+    {price: 89999, recordedAt: '2024-12-01'}
+  ];
+
+  console.log('🚀 Testing line chart with proper axes...');
+  
+  const success = await sendLineChartAlert(sampleProduct, sampleHistory, telegramBot);
+  
+  if (success) {
+    console.log('✅ Line chart alert sent successfully!');
+    console.log('📊 Features:');
+    console.log('   - Y-axis with price scale');
+    console.log('   - X-axis with month labels');
+    console.log('   - Connected line chart');
+  } else {
+    console.log('❌ Failed to send alert');
+  }
+}
+
+testLineChart();

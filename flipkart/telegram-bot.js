@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { spawn, exec } from 'child_process';
 import fs from 'fs';
+import FormData from 'form-data';
 import dotenv from 'dotenv';
+import { generateEnhancedASCIIChart, getPriceHistory } from './chart-generator.js';
 
 dotenv.config({ path: './.env' });
 
@@ -9,6 +11,15 @@ const { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } = process.env;
 const BOT_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 let offset = 0;
+
+// Load database
+function loadDB() {
+  try {
+    return JSON.parse(fs.readFileSync('./price-tracker-db.json', 'utf8'));
+  } catch {
+    return { products: {}, priceHistory: [] };
+  }
+}
 
 // Send message to Telegram
 async function sendMessage(text) {
@@ -20,6 +31,44 @@ async function sendMessage(text) {
     });
   } catch (err) {
     console.error('Send message error:', err.response?.data || err.message);
+  }
+}
+
+// Send photo to Telegram
+async function sendPhoto(imagePath, caption) {
+  try {
+    const formData = new FormData();
+    formData.append('chat_id', TELEGRAM_CHAT_ID);
+    formData.append('photo', fs.createReadStream(imagePath));
+    formData.append('caption', caption);
+    
+    await axios.post(`${BOT_URL}/sendPhoto`, formData, {
+      headers: formData.getHeaders()
+    });
+  } catch (err) {
+    console.error('Send photo error:', err.response?.data || err.message);
+  }
+}
+
+// Show price charts for recent products
+async function showPriceCharts() {
+  const db = loadDB();
+  const products = Object.entries(db.products).slice(0, 5); // Show top 5 products
+  
+  if (products.length === 0) {
+    await sendMessage('📊 <b>No Price Data Available</b>\n\nStart monitoring some products first!');
+    return;
+  }
+  
+  await sendMessage('📊 <b>Generating Price Charts...</b>\n\nPlease wait...');
+  
+  for (const [productId, product] of products) {
+    const priceHistory = getPriceHistory(db, productId);
+    
+    if (priceHistory.length >= 2) {
+      const asciiChart = generateEnhancedASCIIChart(priceHistory, product.title);
+      await sendMessage(`<pre>${asciiChart}</pre>`);
+    }
   }
 }
 
@@ -119,11 +168,26 @@ async function processMessage(message) {
     case 'status':
       const running = isTrackerRunning();
       const status = running ? '🟢 <b>RUNNING</b>' : '🔴 <b>STOPPED</b>';
-      await sendMessage(`📊 <b>Tracker Status</b>\n\n${status}\n\nCommands:\n• <code>start</code> - Start monitoring\n• <code>stop</code> - Stop monitoring\n• <code>status</code> - Check status`);
+      await sendMessage(`📊 <b>Tracker Status</b>\n\n${status}\n\nCommands:\n• <code>start</code> - Start monitoring\n• <code>stop</code> - Stop monitoring\n• <code>status</code> - Check status\n• <code>charts</code> - View price charts`);
+      break;
+      
+    case '/charts':
+    case 'charts':
+      await showPriceCharts();
       break;
       
     default:
-      await sendMessage('❓ <b>Unknown Command</b>\n\nAvailable commands:\n• <code>start</code> - Start price tracker\n• <code>stop</code> - Stop price tracker\n• <code>status</code> - Check status');
+      await sendMessage('❓ <b>Unknown Command</b>\n\nAvailable commands:\n• <code>start</code> - Start price tracker\n• <code>stop</code> - Stop price tracker\n• <code>status</code> - Check status\n• <code>charts</code> - View price charts');
+  }
+}
+
+// Clear webhook on startup
+async function clearWebhook() {
+  try {
+    await axios.post(`${BOT_URL}/deleteWebhook`);
+    console.log('✅ Webhook cleared');
+  } catch (err) {
+    console.log('Webhook clear attempt:', err.response?.status || err.message);
   }
 }
 
@@ -143,16 +207,31 @@ async function pollMessages() {
       offset = update.update_id;
     }
   } catch (err) {
-    console.error('Poll error:', err.message);
+    if (err.response?.status === 409) {
+      console.log('⚠️  Conflict detected - clearing webhook and retrying...');
+      await clearWebhook();
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+    } else {
+      console.error('Poll error:', err.response?.status || err.message);
+    }
   }
 }
 
 // Start bot
-console.log('🤖 Telegram bot started');
-console.log('📱 Send "start" or "stop" to control the price tracker');
+async function startBot() {
+  console.log('🤖 Starting Telegram bot...');
+  
+  // Clear any existing webhook first
+  await clearWebhook();
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  console.log('📱 Send "start" or "stop" to control the price tracker');
+  
+  // Initial status message
+  await sendMessage('🤖 <b>Control Bot Online</b>\n\nSend commands:\n• <code>start</code> - Start price tracker\n• <code>stop</code> - Stop price tracker\n• <code>status</code> - Check status\n• <code>charts</code> - View price charts');
+  
+  // Poll for messages every 3 seconds
+  setInterval(pollMessages, 3000);
+}
 
-// Initial status message
-sendMessage('🤖 <b>Control Bot Online</b>\n\nSend commands:\n• <code>start</code> - Start price tracker\n• <code>stop</code> - Stop price tracker\n• <code>status</code> - Check status');
-
-// Poll for messages every 2 seconds
-setInterval(pollMessages, 2000);
+startBot();

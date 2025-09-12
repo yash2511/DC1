@@ -2,28 +2,65 @@ import axios from "axios";
 import dotenv from 'dotenv';
 import fs from 'fs';
 import { initDB, upsertProduct, addPriceRecord, cleanupOldRecords } from './database.js';
+import { generateEnhancedASCIIChart, getPriceHistory } from './chart-generator.js';
+import { generateEnhancedSVGChart } from './enhanced-chart.js';
+import FormData from 'form-data';
 
 dotenv.config({ path: './.env' });
 
 const { FLIPKART_AFFILIATE_ID, FLIPKART_AFFILIATE_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } = process.env;
 
-// Send Telegram alert
+// Load database for chart generation
+function loadDB() {
+  try {
+    return JSON.parse(fs.readFileSync('./price-tracker-db.json', 'utf8'));
+  } catch {
+    return { products: {}, priceHistory: [] };
+  }
+}
+
+// Send Telegram alert with enhanced price chart
 async function sendAlert(product) {
   const info = product.productBaseInfoV1;
+  const productId = info.productId;
+  
+  // Get price history for chart
+  const db = loadDB();
+  const priceHistory = getPriceHistory(db, productId);
+  const minPrice = Math.min(...priceHistory.map(p => p.price));
+  
   const message = `🚨 <b>ALL-TIME LOW ALERT!</b> 🚨\n\n` +
     `📱 <b>${info.title}</b>\n\n` +
-    `💰 Current Price: ₹${info.flipkartSpecialPrice.amount}\n` +
+    `💰 Current Price: ₹${info.flipkartSpecialPrice.amount.toLocaleString()}\n` +
     `🔥 Discount: ${info.discountPercentage}% OFF\n` +
+    `📉 All-Time Low: ₹${minPrice.toLocaleString()}\n` +
     `📦 Stock: ${info.inStock ? '✅ Available' : '❌ Out of Stock'}\n\n` +
     `🛒 <a href="${info.productUrl}">BUY NOW - Limited Time!</a>`;
 
   try {
+    // Send alert message
     await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       chat_id: TELEGRAM_CHAT_ID,
       text: message,
       parse_mode: 'HTML'
     });
-    console.log(`Alert sent for: ${info.title}`);
+    
+    // Generate and send enhanced SVG chart
+    const chartFile = generateEnhancedSVGChart(priceHistory, info.title, productId);
+    if (chartFile && fs.existsSync(chartFile)) {
+      const formData = new FormData();
+      formData.append('chat_id', TELEGRAM_CHAT_ID);
+      formData.append('photo', fs.createReadStream(chartFile));
+      formData.append('caption', `📊 Price History - ${info.title}`);
+      
+      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, formData, {
+        headers: formData.getHeaders()
+      });
+      
+      fs.unlinkSync(chartFile); // Clean up
+    }
+    
+    console.log(`Enhanced alert with chart sent for: ${info.title}`);
   } catch (err) {
     console.error('Telegram error:', err.response?.data || err.message);
   }

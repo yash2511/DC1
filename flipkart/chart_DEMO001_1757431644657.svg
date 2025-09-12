@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for price area -->
+    <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:0.05" />
+    </linearGradient>
+    
+    <!-- Gradient for price line -->
+    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#EF4444" />
+      <stop offset="50%" style="stop-color:#F59E0B" />
+      <stop offset="100%" style="stop-color:#10B981" />
+    </linearGradient>
+    
+    <!-- Drop shadow filter -->
+    <filter id="dropshadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1000" height="400" fill="#F8FAFC"/>
+  
+  <!-- Chart background -->
+  <rect x="100" y="60" width="820" height="260" 
+        fill="white" stroke="#E2E8F0" stroke-width="1" rx="8"/>
+  
+  <!-- Grid lines -->
+  <line x1="100" x2="920" 
+                        y1="60" y2="60" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="100" x2="920" 
+                        y1="125" y2="125" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="100" x2="920" 
+                        y1="190" y2="190" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="100" x2="920" 
+                        y1="255" y2="255" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="100" x2="920" 
+                        y1="320" y2="320" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="100" x2="100" 
+                        y1="60" y2="320" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="264" x2="264" 
+                        y1="60" y2="320" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="428" x2="428" 
+                        y1="60" y2="320" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="592" x2="592" 
+                        y1="60" y2="320" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="756" x2="756" 
+                        y1="60" y2="320" 
+                        stroke="#E2E8F0" stroke-width="1"/><line x1="920" x2="920" 
+                        y1="60" y2="320" 
+                        stroke="#E2E8F0" stroke-width="1"/>
+  
+  <!-- Price area fill -->
+  <path d="M 100 60 C 127.33333333333333 60, 154.66666666666666 80.79999999999998, 182 80.79999999999998 C 209.33333333333334 80.79999999999998, 236.66666666666666 111.99999999999999, 264 111.99999999999999 C 291.3333333333333 111.99999999999999, 318.6666666666667 132.8, 346 132.8 C 373.3333333333333 132.8, 400.6666666666667 164, 428 164 C 455.3333333333333 164, 482.6666666666667 184.8, 510 184.8 C 537.3333333333334 184.8, 564.6666666666666 216, 592 216 C 619.3333333333334 216, 646.6666666666666 236.79999999999998, 674 236.79999999999998 C 701.3333333333334 236.79999999999998, 728.6666666666666 268, 756 268 C 783.3333333333334 268, 810.6666666666666 288.8, 838 288.8 C 865.3333333333334 288.8, 892.6666666666666 320, 920 320 L 920 320 L 100 320 Z" 
+        fill="url(#priceGradient)"/>
+  
+  <!-- Price line with gradient -->
+  <path d="M 100 60 C 127.33333333333333 60, 154.66666666666666 80.79999999999998, 182 80.79999999999998 C 209.33333333333334 80.79999999999998, 236.66666666666666 111.99999999999999, 264 111.99999999999999 C 291.3333333333333 111.99999999999999, 318.6666666666667 132.8, 346 132.8 C 373.3333333333333 132.8, 400.6666666666667 164, 428 164 C 455.3333333333333 164, 482.6666666666667 184.8, 510 184.8 C 537.3333333333334 184.8, 564.6666666666666 216, 592 216 C 619.3333333333334 216, 646.6666666666666 236.79999999999998, 674 236.79999999999998 C 701.3333333333334 236.79999999999998, 728.6666666666666 268, 756 268 C 783.3333333333334 268, 810.6666666666666 288.8, 838 288.8 C 865.3333333333334 288.8, 892.6666666666666 320, 920 320" fill="none" stroke="url(#lineGradient)" stroke-width="4" 
+        stroke-linecap="round" stroke-linejoin="round" filter="url(#dropshadow)"/>
+  
+  <!-- Price points -->
+  <circle cx="100" cy="60" r="6" fill="#F59E0B" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="182" cy="80.79999999999998" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="264" cy="111.99999999999999" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="346" cy="132.8" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="428" cy="164" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="510" cy="184.8" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="592" cy="216" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="674" cy="236.79999999999998" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="756" cy="268" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="838" cy="288.8" r="4" fill="#3B82F6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/><circle cx="920" cy="320" r="6" fill="#8B5CF6" 
+                    stroke="white" stroke-width="2" filter="url(#dropshadow)"/>
+  
+  <!-- Price labels on y-axis -->
+  <text x="90" y="64" text-anchor="end" 
+           font-family="Arial, sans-serif" font-size="12" fill="#64748B" font-weight="500">
+       ₹134,900
+     </text><text x="90" y="129" text-anchor="end" 
+           font-family="Arial, sans-serif" font-size="12" fill="#64748B" font-weight="500">
+       ₹128,650
+     </text><text x="90" y="194" text-anchor="end" 
+           font-family="Arial, sans-serif" font-size="12" fill="#64748B" font-weight="500">
+       ₹122,400
+     </text><text x="90" y="259" text-anchor="end" 
+           font-family="Arial, sans-serif" font-size="12" fill="#64748B" font-weight="500">
+       ₹116,150
+     </text><text x="90" y="324" text-anchor="end" 
+           font-family="Arial, sans-serif" font-size="12" fill="#64748B" font-weight="500">
+       ₹109,900
+     </text>
+  
+  <!-- Date labels on x-axis -->
+  <text x="100" y="345" text-anchor="middle" 
+           font-family="Arial, sans-serif" font-size="11" fill="#64748B" font-weight="500">
+       Aug 25
+     </text><text x="264" y="345" text-anchor="middle" 
+           font-family="Arial, sans-serif" font-size="11" fill="#64748B" font-weight="500">
+       15 Aug
+     </text><text x="428" y="345" text-anchor="middle" 
+           font-family="Arial, sans-serif" font-size="11" fill="#64748B" font-weight="500">
+       22 Aug
+     </text><text x="592" y="345" text-anchor="middle" 
+           font-family="Arial, sans-serif" font-size="11" fill="#64748B" font-weight="500">
+       28 Aug
+     </text><text x="756" y="345" text-anchor="middle" 
+           font-family="Arial, sans-serif" font-size="11" fill="#64748B" font-weight="500">
+       Thu
+     </text><text x="920" y="345" text-anchor="middle" 
+           font-family="Arial, sans-serif" font-size="11" fill="#64748B" font-weight="500">
+       Today
+     </text>
+  
+  <!-- Chart title -->
+  <text x="500" y="30" text-anchor="middle" font-family="Arial, sans-serif" 
+        font-size="18" fill="#1E293B" font-weight="600">
+    iPhone 15 Pro Max (256GB) - Price Drop Alert!
+  </text>
+  
+  <!-- Price statistics -->
+  <g transform="translate(720, 80)">
+    <rect width="190" height="80" fill="white" stroke="#E2E8F0" stroke-width="1" rx="6"/>
+    <text x="10" y="20" font-family="Arial, sans-serif" font-size="12" fill="#64748B" font-weight="600">Price Statistics</text>
+    <text x="10" y="38" font-family="Arial, sans-serif" font-size="11" fill="#1E293B">Current: ₹109,900</text>
+    <text x="10" y="52" font-family="Arial, sans-serif" font-size="11" fill="#1E293B">Lowest: ₹109,900</text>
+    <text x="10" y="66" font-family="Arial, sans-serif" font-size="11" fill="#1E293B">Reduction: 18.5%</text>
+  </g>
+  
+  <!-- Legend -->
+  <g transform="translate(100, 370)">
+    <circle cx="0" cy="0" r="4" fill="#EF4444"/>
+    <text x="15" y="4" font-family="Arial, sans-serif" font-size="11" fill="#64748B">First Price</text>
+    
+    <circle cx="80" cy="0" r="4" fill="#10B981"/>
+    <text x="95" y="4" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Current Price</text>
+    
+    <circle cx="160" cy="0" r="4" fill="#8B5CF6"/>
+    <text x="175" y="4" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Lowest Price</text>
+    
+    <circle cx="240" cy="0" r="4" fill="#F59E0B"/>
+    <text x="255" y="4" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Highest Price</text>
+  </g>
+</svg>

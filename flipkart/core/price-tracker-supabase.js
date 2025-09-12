@@ -41,8 +41,8 @@ async function sendAlert(product) {
         formData.append('caption', 'Price History Chart');
         formData.append('parse_mode', 'HTML');
         
-        // Send text message first
-        const textMessage = `🚨 <b>ALL-TIME LOW ALERT!</b> 🚨\n\n` +
+        // Enhanced message with all details
+        const textMessage = `🚨 <b>PRICE DROP ALERT!</b> 🚨\n\n` +
           `📱 <b>${info.title}</b>\n\n` +
           `💰 Current Price: ₹${info.flipkartSpecialPrice.amount.toLocaleString()}\n` +
           `🔥 Discount: ${info.discountPercentage}% OFF\n` +
@@ -50,6 +50,9 @@ async function sendAlert(product) {
           `📉 Lowest Ever: ₹${stats.minPrice.toLocaleString()}\n` +
           `📈 Highest: ₹${stats.maxPrice.toLocaleString()}\n` +
           `💾 Price Reduction: ${stats.reductionPercent}%\n\n` +
+          `💸 You Save: ₹${(stats.maxPrice - info.flipkartSpecialPrice.amount).toLocaleString()} vs Highest Price\n` +
+          `⏰ Alert Time: ${new Date().toLocaleString()}\n` +
+          `📊 Chart: Price history with trend analysis\n\n` +
           `🛒 <a href="${info.productUrl}">BUY NOW - Limited Time!</a>`;
         
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -70,12 +73,16 @@ async function sendAlert(product) {
       }
     }
     
-    // Fallback to text-only alert if chart generation fails
-    const message = `🚨 <b>ALL-TIME LOW ALERT!</b> 🚨\n\n` +
+    // Fallback to enhanced text-only alert
+    const message = `🚨 <b>PRICE DROP ALERT!</b> 🚨\n\n` +
       `📱 <b>${info.title}</b>\n\n` +
       `💰 Current Price: ₹${info.flipkartSpecialPrice.amount.toLocaleString()}\n` +
       `🔥 Discount: ${info.discountPercentage}% OFF\n` +
-      `📦 Stock: ${info.inStock ? '✅ Available' : '❌ Out of Stock'}\n\n` +
+      `📦 Stock: ${info.inStock ? '✅ Available' : '❌ Out of Stock'}\n` +
+      `📉 Lowest Ever: ₹${info.flipkartSpecialPrice.amount.toLocaleString()}\n` +
+      `📈 Highest: Not Available\n` +
+      `💾 Price Reduction: New Low!\n\n` +
+      `⏰ Alert Time: ${new Date().toLocaleString()}\n\n` +
       `🛒 <a href="${info.productUrl}">BUY NOW - Limited Time!</a>`;
 
     await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -116,11 +123,14 @@ async function checkPrices(queries) {
         // Add price record to database
         await addPriceRecord(productId, currentPrice);
         
-        // Check if this is an all-time low
-        const isNewLow = await upsertProduct(productId, info.title, currentPrice);
+        // Add price record and check for significant reduction
+        await upsertProduct(productId, info.title, currentPrice);
         
-        if (isNewLow) {
-          console.log(`🚨 ALL-TIME LOW: ${info.title} - ₹${currentPrice}`);
+        // Get price statistics to check reduction percentage
+        const stats = await getPriceStatistics(productId);
+        
+        if (stats && stats.reductionPercent >= 2) {
+          console.log(`🚨 PRICE DROP ALERT: ${info.title} - ${stats.reductionPercent}% reduction`);
           await sendAlert(product);
         }
       }
